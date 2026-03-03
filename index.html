@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>燕雲十六聲 - 兌換碼統整</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --card-border: #333;
+            --text-main: #e0e0e0;
+            --text-sub: #a0a0a0;
+            --gold: #d4af37;
+            --expired-bg: #2a1b1b;
+            --expired-border: #5c2b2b;
+            --expired-text: #ff6b6b;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--gold);
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 卡片設計 */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        /* 已過期卡片樣式 */
+        .card.expired {
+            background-color: var(--expired-bg);
+            border-color: var(--expired-border);
+            opacity: 0.8;
+        }
+
+        .card.expired .code-text {
+            color: var(--text-sub);
+            text-decoration: line-through;
+        }
+
+        .card.expired .status-badge {
+            background-color: var(--expired-text);
+            color: #fff;
+        }
+
+        /* 頂部：序號與狀態 */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .code-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .code-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--gold);
+            letter-spacing: 1px;
+        }
+
+        .copy-btn {
+            background-color: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--gold);
+            color: #000;
+        }
+
+        .card.expired .copy-btn {
+            display: none; /* 過期隱藏複製按鈕 */
+        }
+
+        .status-badge {
+            background-color: #2e7d32;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        /* 內容區：獎勵與備註 */
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .reward-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .reward-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: rgba(255,255,255,0.05);
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+
+        .reward-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+
+        .note {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-top: 5px;
+            background-color: rgba(0,0,0,0.2);
+            padding: 8px;
+            border-left: 3px solid var(--gold);
+        }
+
+        /* 複製成功的提示訊息 */
+        #toast {
+            visibility: hidden;
+            min-width: 200px;
+            background-color: #4caf50;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 12px;
+            position: fixed;
+            z-index: 1;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+
+        @media (max-width: 600px) {
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .status-badge {
+                align-self: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>燕雲十六聲 兌換碼統整</h1>
+    <div class="container" id="code-container">
+        <!-- 卡片將由 JavaScript 動態生成 -->
+    </div>
+
+    <!-- 複製成功提示框 -->
+    <div id="toast">已複製序號！</div>
+
+    <script>
+        // --- 道具圖片對應設定 ---
+        // 請確保你的圖片放在與 html 同層的 images 資料夾中
+        const itemImages = {
+            "長鳴玉": "./images/item1.png",
+            "通寶": "./images/item2.png",
+            "心法心得": "./images/item3.png", // 包含散本
+            "繞樑之音": "./images/item4.png",
+            // 如果還有其他道具且沒有圖，會顯示預設文字不顯示圖片
+        };
+
+        // --- 序號資料庫 (已依照你提供的發布順序排列) ---
+        const codesData = [
+            { code: "WWMGLtiktok", rewards: ["長鳴玉×10", "通寶×10,000"], expiry: "已過期", note: "" },
+            { code: "WWMGLyoutube", rewards: ["長鳴玉×20", "通寶×5,000", "心法心得．散本×1"], expiry: "已過期", note: "" },
+            { code: "WWMGO1114", rewards: ["長鳴玉×100", "繞樑之音×1"], expiry: "已過期", note: "" },
+            { code: "WWM251115", rewards: ["長鳴玉×10", "通寶×5,000", "鵝滴神×1"], expiry: "可兌換", note: "" },
+            { code: "WWMDEVTALK", rewards: ["長鳴玉×40", "通寶×20000"], expiry: "可兌換", note: "" },
+            { code: "YYSLSTIB", rewards: ["長鳴玉×10", "通寶×1000"], expiry: "可兌換", note: "台新ATM優惠券" },
+            { code: "tf8rtrkrje", rewards: ["長鳴玉×10", "通寶×20000", "心法心得．散本×1", "振玉×1"], expiry: "可兌換", note: "Discord任務。tf開頭的都是屬於此code。" },
+            { code: "DEVLOG2601", rewards: ["長鳴玉×40", "通寶×20000"], expiry: "2026/3/6", note: "" },
+            { code: "GOOSENEWS", rewards: ["長鳴玉×20", "心法心得．散本×1"], expiry: "2026/3/31", note: "" },
+            { code: "HEXI0306", rewards: ["長鳴玉×100", "通寶×20000", "繞樑之音×1"], expiry: "可兌換", note: "河西預告片" }
+        ];
+
+        // 尋找對應的圖片URL
+        function getImageUrl(rewardText) {
+            for (const key in itemImages) {
+                if (rewardText.includes(key)) {
+                    return itemImages[key];
+                }
+            }
+            return null; // 找不到圖就回傳 null
+        }
+
+        // 渲染畫面
+        function renderCodes() {
+            const container = document.getElementById('code-container');
+            container.innerHTML = '';
+
+            codesData.forEach(item => {
+                const isExpired = item.expiry === "已過期";
+                const cardClass = isExpired ? "card expired" : "card";
+                
+                // 處理獎勵列表 HTML (加入圖片)
+                let rewardsHtml = '';
+                item.rewards.forEach(reward => {
+                    const imgUrl = getImageUrl(reward);
+                    const imgTag = imgUrl ? `<img src="${imgUrl}" class="reward-icon" alt="icon" onerror="this.style.display='none'">` : '';
+                    rewardsHtml += `<div class="reward-item">${imgTag}<span>${reward}</span></div>`;
+                });
+
+                // 處理備註 HTML
+                const noteHtml = item.note ? `<div class="note">📝 備註：${item.note}</div>` : '';
+
+                // 組裝卡片
+                const card = document.createElement('div');
+                card.className = cardClass;
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="code-container">
+                            <span class="code-text">${item.code}</span>
+                            <button class="copy-btn" onclick="copyText('${item.code}')">點擊複製</button>
+                        </div>
+                        <span class="status-badge">${item.expiry}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="reward-list">${rewardsHtml}</div>
+                        ${noteHtml}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 複製序號功能
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`已複製序號: ${text}`);
+            }).catch(err => {
+                console.error('複製失敗', err);
+                // 備用複製方法
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand("Copy");
+                textArea.remove();
+                showToast(`已複製序號: ${text}`);
+            });
+        }
+
+        // 顯示提示框
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2000);
+        }
+
+        // 網頁載入時執行渲染
+        window.onload = renderCodes;
+    </script>
+</body>
+</html>
