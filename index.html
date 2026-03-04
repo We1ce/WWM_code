@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>燕雲十六聲 - 兌換碼統整</title>
+    <title>燕雲十六聲 - 統整小幫手</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -15,6 +15,9 @@
             --expired-bg: #2a1b1b;
             --expired-border: #5c2b2b;
             --expired-text: #ff6b6b;
+            --badge-loc: #4a6fa5;
+            --badge-multi: #b5651d;
+            --badge-single: #2e7d32;
         }
 
         body {
@@ -22,7 +25,7 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 0 20px 40px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -31,19 +34,56 @@
         h1 {
             color: var(--gold);
             text-align: center;
-            margin-bottom: 30px;
+            margin: 20px 0 15px 0;
             letter-spacing: 2px;
         }
 
-        .container {
+        /* 導覽列設計 */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
             width: 100%;
             max-width: 800px;
-            display: flex;
+            padding-bottom: 5px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: var(--gold);
+            border-bottom: 3px solid var(--gold);
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 800px;
+            display: none; /* 預設隱藏，由JS控制顯示 */
             flex-direction: column;
             gap: 15px;
         }
 
-        /* 卡片設計 */
+        .page-container.active {
+            display: flex;
+        }
+
+        /* --- 序號卡片區 --- */
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
@@ -55,118 +95,161 @@
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        .card.expired { background-color: var(--expired-bg); border-color: var(--expired-border); opacity: 0.8; }
+        .card.expired .code-text { color: var(--text-sub); text-decoration: line-through; }
+        .card.expired .status-badge { background-color: var(--expired-text); color: #fff; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .code-container { display: flex; align-items: center; gap: 10px; }
+        .code-text { font-size: 1.5rem; font-weight: bold; color: var(--gold); letter-spacing: 1px; }
+        .copy-btn { background-color: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+        .copy-btn:hover { background-color: var(--gold); color: #000; }
+        .card.expired .copy-btn { display: none; }
+        .status-badge { background-color: #2e7d32; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; }
+        .card-body { display: flex; flex-direction: column; gap: 10px; }
+        .reward-list { display: flex; flex-wrap: wrap; gap: 15px; }
+        .reward-item { display: flex; align-items: center; gap: 8px; background-color: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 6px; }
+        .reward-icon { width: 24px; height: 24px; object-fit: contain; }
+        .note { font-size: 0.9rem; color: var(--text-sub); margin-top: 5px; background-color: rgba(0,0,0,0.2); padding: 8px; border-left: 3px solid var(--gold); }
 
-        /* 已過期卡片樣式 */
-        .card.expired {
-            background-color: var(--expired-bg);
-            border-color: var(--expired-border);
-            opacity: 0.8;
-        }
-
-        .card.expired .code-text {
-            color: var(--text-sub);
-            text-decoration: line-through;
-        }
-
-        .card.expired .status-badge {
-            background-color: var(--expired-text);
-            color: #fff;
-        }
-
-        /* 頂部：序號與狀態 */
-        .card-header {
+        /* --- 每日任務區 --- */
+        .task-header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
+            margin-bottom: 10px;
         }
 
-        .code-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .code-text {
-            font-size: 1.5rem;
-            font-weight: bold;
+        .task-header-row h2 {
+            margin: 0;
             color: var(--gold);
-            letter-spacing: 1px;
+            font-size: 1.3rem;
         }
 
-        .copy-btn {
+        .clear-btn {
             background-color: transparent;
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            padding: 5px 12px;
+            border: 1px solid var(--expired-text);
+            color: var(--expired-text);
+            padding: 6px 15px;
             border-radius: 5px;
             cursor: pointer;
             font-size: 0.9rem;
             transition: all 0.2s;
         }
 
-        .copy-btn:hover {
-            background-color: var(--gold);
-            color: #000;
+        .clear-btn:hover {
+            background-color: var(--expired-text);
+            color: #fff;
         }
 
-        .card.expired .copy-btn {
-            display: none; /* 過期隱藏複製按鈕 */
+        .task-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
         }
 
-        .status-badge {
-            background-color: #2e7d32;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: bold;
+        .task-item:hover {
+            border-color: #555;
+            background-color: #252525;
         }
 
-        /* 內容區：獎勵與備註 */
-        .card-body {
+        /* 任務完成的樣式 */
+        .task-item.completed {
+            opacity: 0.5;
+            border-color: #111;
+            background-color: #1a1a1a;
+        }
+
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+            color: var(--text-sub);
+        }
+
+        /* 復古風核取方塊 */
+        input[type="checkbox"] {
+            appearance: none;
+            background-color: transparent;
+            margin: 0;
+            font: inherit;
+            color: var(--gold);
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--text-sub);
+            border-radius: 4px;
+            display: grid;
+            place-content: center;
+            cursor: pointer;
+            margin-top: 2px;
+        }
+
+        input[type="checkbox"]::before {
+            content: "";
+            width: 12px;
+            height: 12px;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em var(--gold);
+            background-color: transform;
+            transform-origin: center;
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        }
+
+        input[type="checkbox"]:checked {
+            border-color: var(--gold);
+        }
+
+        input[type="checkbox"]:checked::before {
+            transform: scale(1);
+        }
+
+        .task-content {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 6px;
+            flex: 1;
         }
 
-        .reward-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .reward-item {
+        .task-title-row {
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 8px;
-            background-color: rgba(255,255,255,0.05);
-            padding: 6px 12px;
-            border-radius: 6px;
         }
 
-        .reward-icon {
-            width: 24px;
-            height: 24px;
-            object-fit: contain;
+        .task-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--text-main);
+            transition: color 0.2s;
         }
 
-        .note {
+        .task-desc {
             font-size: 0.9rem;
             color: var(--text-sub);
-            margin-top: 5px;
-            background-color: rgba(0,0,0,0.2);
-            padding: 8px;
-            border-left: 3px solid var(--gold);
         }
 
-        /* 複製成功的提示訊息 */
+        /* 標籤設計 */
+        .badge {
+            font-size: 0.75rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .badge-loc { background-color: var(--badge-loc); color: #fff; }
+        .badge-multi { background-color: var(--badge-multi); color: #fff; }
+        .badge-single { background-color: var(--badge-single); color: #fff; }
+
+
+        /* 提示框 */
         #toast {
             visibility: hidden;
             min-width: 200px;
@@ -176,7 +259,7 @@
             border-radius: 8px;
             padding: 12px;
             position: fixed;
-            z-index: 1;
+            z-index: 100;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
@@ -193,36 +276,73 @@
         }
 
         @media (max-width: 600px) {
-            .card-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            .status-badge {
-                align-self: flex-start;
-            }
+            .card-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .status-badge { align-self: flex-start; }
+            .nav-tabs { justify-content: space-around; }
+            .tab-btn { flex: 1; text-align: center; }
         }
     </style>
 </head>
 <body>
 
-    <h1>燕雲十六聲 兌換碼統整</h1>
-    <div class="container" id="code-container">
-        <!-- 卡片將由 JavaScript 動態生成 -->
+    <h1>燕雲十六聲</h1>
+
+    <!-- 導覽列 -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('codesPage', this)">序號統整</button>
+        <button class="tab-btn" onclick="switchTab('tasksPage', this)">每日任務</button>
     </div>
 
-    <!-- 複製成功提示框 -->
-    <div id="toast">已複製序號！</div>
+    <!-- 分頁 1：序號統整 -->
+    <div class="page-container active" id="codesPage">
+        <!-- 序號卡片將由 JS 動態生成 -->
+    </div>
+
+    <!-- 分頁 2：每日任務 -->
+    <div class="page-container" id="tasksPage">
+        <div class="task-header-row">
+            <h2>每日待辦事項</h2>
+            <button class="clear-btn" onclick="clearTasks()">清除狀態</button>
+        </div>
+        <div id="tasks-container" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- 任務列表將由 JS 動態生成 -->
+        </div>
+    </div>
+
+    <!-- 提示框 -->
+    <div id="toast">提示訊息</div>
 
     <script>
-        // --- 道具圖片對應設定 ---
-        // 圖片要放在 html 同層的 images 資料夾中
+        // ==========================================
+        //  UI 互動與分頁切換
+        // ==========================================
+        function switchTab(pageId, btnElement) {
+            // 更新按鈕樣式
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            // 更新頁面顯示
+            document.querySelectorAll('.page-container').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.style.backgroundColor = isError ? "#f44336" : "#4caf50";
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2000);
+        }
+
+        // ==========================================
+        //  分頁 1：序號統整系統
+        // ==========================================
+        // 圖片要放在 html 同層的 images 資料夾中，沒有圖片的其他道具，只顯示預設文字。
         const itemImages = {
             "長鳴玉": "./images/item1.png",
             "通寶": "./images/item2.png",
             "心法心得": "./images/item3.png",
             "繞樑之音": "./images/item4.png",
-            // 沒有圖片的其他道具，只會預設文字。
         };
 
         // --- 序號資料庫 (已依照你提供的發布順序排列) ---
@@ -316,12 +436,119 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2000);
         }
 
-        // 網頁載入時執行渲染
-        window.onload = renderCodes;
-    </script>
-</body>
+        // ==========================================
+        //  分頁 2：每日任務系統
+        // ==========================================
+        const dailyTasksData = [
+            { id: "task_1", title: "懸賞", desc: "", type: "", location: "" },
+            { id: "task_2", title: "素材", desc: "奇術、武學突破素材、製作弓箭、弓玦", type: "", location: "" },
+            { id: "task_3", title: "門派任務", desc: "", type: "", location: "" },
+            { id: "task_4", title: "消耗體力、心力", desc: "升奇術打協力清剿、缺心法裝備打試劍5人本", type: "", location: "" },
+            { id: "task_5", title: "許願池", desc: "錦鯉運可以開金裝、和鳴。", type: "多人", location: "" },
+            { id: "task_6", title: "祈緣樹", desc: "通寶", type: "多人", location: "" },
+            { id: "task_7", title: "百業派對", desc: "", type: "多人", location: "" },
+            { id: "task_8", title: "天泉跑步", desc: "提升體魄", type: "單人", location: "神仙渡西" },
+            { id: "task_9", title: "石小石 (賭石)", desc: "", type: "", location: "鬼市" },
+            { id: "task_10", title: "葉不休下棋3次", desc: "", type: "", location: "不羨仙" },
+            { id: "task_11", title: "按摩打賞", desc: "連續10天拿服裝", type: "多人", location: "春水閣" },
+            { id: "task_12", title: "天下第一枝(報紙)", desc: "F2", type: "", location: "" }
+        ];
 
+        // 讀取 LocalStorage 中的任務狀態
+        function getTaskState() {
+            const saved = localStorage.getItem('yanyun_tasks_state');
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        // 儲存狀態到 LocalStorage
+        function saveTaskState(state) {
+            localStorage.setItem('yanyun_tasks_state', JSON.stringify(state));
+        }
+
+        // 點擊整個任務區塊都能觸發打勾
+        function toggleTask(taskId) {
+            const state = getTaskState();
+            const checkbox = document.getElementById(`cb_${taskId}`);
+            const taskDiv = document.getElementById(`div_${taskId}`);
+            
+            // 反轉狀態
+            const isCompleted = !state[taskId];
+            state[taskId] = isCompleted;
+            
+            // 更新 UI 與儲存
+            checkbox.checked = isCompleted;
+            if (isCompleted) {
+                taskDiv.classList.add('completed');
+            } else {
+                taskDiv.classList.remove('completed');
+            }
+            saveTaskState(state);
+        }
+
+        // 清除所有任務狀態
+        function clearTasks() {
+            if(confirm("確定要清除所有每日任務的完成狀態嗎？")) {
+                localStorage.removeItem('yanyun_tasks_state');
+                renderTasks(); // 重新渲染列表
+                showToast("✅ 已重設每日任務狀態");
+            }
+        }
+
+        // 渲染每日任務清單
+        function renderTasks() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+            const currentState = getTaskState();
+
+            dailyTasksData.forEach(task => {
+                const isCompleted = !!currentState[task.id]; // 判斷是否打勾
+                
+                // 處理標籤 (界碑、單多人)
+                let badgesHtml = '';
+                if (task.location) {
+                    badgesHtml += `<span class="badge badge-loc">[${task.location}]</span>`;
+                }
+                if (task.type === "多人") {
+                    badgesHtml += `<span class="badge badge-multi">多人</span>`;
+                } else if (task.type === "單人") {
+                    badgesHtml += `<span class="badge badge-single">單人</span>`;
+                }
+
+                // 處理描述
+                const descHtml = task.desc ? `<div class="task-desc">${task.desc}</div>` : '';
+
+                // 建立任務區塊
+                const taskEl = document.createElement('div');
+                taskEl.className = `task-item ${isCompleted ? 'completed' : ''}`;
+                taskEl.id = `div_${task.id}`;
+                taskEl.onclick = () => toggleTask(task.id); // 點擊卡片觸發
+
+                taskEl.innerHTML = `
+                    <input type="checkbox" id="cb_${task.id}" ${isCompleted ? 'checked' : ''} onclick="event.stopPropagation(); toggleTask('${task.id}')">
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            ${badgesHtml}
+                            <span class="task-title">${task.title}</span>
+                        </div>
+                        ${descHtml}
+                    </div>
+                `;
+                container.appendChild(taskEl);
+            });
+        }
+
+        // ==========================================
+        //  初始化
+        // ==========================================
+        window.onload = function() {
+            renderCodes();
+            renderTasks();
+        };
+    </script>
+
+</body>
 </html>
+
 
 
 
